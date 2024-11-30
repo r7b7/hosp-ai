@@ -1,2 +1,2 @@
 # hosp-ai
-Java Library to use LLMs from Multiple Providers
+Java Library to Use LLMs from Multiple Providers
