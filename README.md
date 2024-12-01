@@ -70,5 +70,6 @@ Universal LLM Provider Connector for Java
       
    
 2. Set values of api-key in yaml or properties file
-3. Use a custom WebClient 
-   **Doc to be updated**
+3. Use a custom WebClient
+   
+   <<**Doc to be updated**>>
