@@ -3,7 +3,7 @@ Universal LLM Provider Connector for Java
 
 ![GitHub stars](https://img.shields.io/github/stars/r7b7/hosp-ai?style=social)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![GitHub Release Date](https://img.shields.io/github/release-date/r7b7/hosp-ai) 
+![GitHub release (latest by semver)](https://img.shields.io/github/v/tag/r7b7/hosp-ai)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 ## How to Add hosp-ai as a Maven Dependency
