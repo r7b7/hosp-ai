@@ -54,6 +54,10 @@ Universal LLM Provider Connector for Java
 3. Groq
 4. Ollama
 
+## Features in Pipeline
+1. Accept Image Input
+2. Support Streaming response
+
 ## Integration with SpringBoot
 1. Add Jitpack and hosp-ai maven dependencies as mentioned in the beginning.
 
