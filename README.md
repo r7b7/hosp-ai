@@ -2,7 +2,7 @@
 Universal LLM Provider Connector for Java
 
 ![GitHub stars](https://img.shields.io/github/stars/r7b7/hosp-ai?style=social)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 ![GitHub release (latest by semver)](https://img.shields.io/github/v/tag/r7b7/hosp-ai)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
