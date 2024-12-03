@@ -89,3 +89,5 @@ Universal LLM Provider Connector for Java
         ```bash
          GroqClientFactory.setClient(customGroqClient);
    
+## More Examples
+For working examples and tutorials - visit [Wiki](https://github.com/r7b7/hosp-ai/wiki)
