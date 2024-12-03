@@ -5,6 +5,8 @@ Universal LLM Provider Connector for Java
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 ![GitHub release (latest by semver)](https://img.shields.io/github/v/tag/r7b7/hosp-ai)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Wiki](https://img.shields.io/badge/Documentation-Wiki-blue)](https://github.com/r7b7/hosp-ai/wiki)
+
 
 ## How to Add hosp-ai as a Maven Dependency
 1. Add jitpack repository in pom file
