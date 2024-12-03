@@ -62,7 +62,6 @@ Universal LLM Provider Connector for Java
 1. Add Jitpack and hosp-ai maven dependencies as mentioned in the beginning.
 
   Sample code:
-     ```bash
       
       @GetMapping("/prompt")
       public CompletionResponse getChatCompletion(@RequestParam String query){
@@ -75,5 +74,16 @@ Universal LLM Provider Connector for Java
    
 2. Set values of api-key in yaml or properties file
 3. Use a custom WebClient
+   While using frameworks like Spring Boot, developers might want to leverage the strengths provided by WebClient or RestTemplate. In such scenarios,
+   one can override the default client implementation provided in the library by following two steps,
    
-   <<**Doc to be updated**>>
+   1. Create a Custom Client class and implement one of the Client interfaces, e.g. GroqClient, 
+      
+	  ```bash
+   		public class CustomGroqClient implements GroqClient
+
+   2. Set the client in ClientFactory class
+
+        ```bash
+         GroqClientFactory.setClient(customGroqClient);
+   
