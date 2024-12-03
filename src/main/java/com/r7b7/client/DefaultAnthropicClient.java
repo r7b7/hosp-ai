@@ -6,25 +6,36 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.r7b7.client.model.AnthropicResponse;
 import com.r7b7.client.model.Message;
+import com.r7b7.config.PropertyConfig;
 import com.r7b7.entity.CompletionRequest;
 import com.r7b7.entity.CompletionResponse;
 import com.r7b7.entity.ErrorResponse;
 
 public class DefaultAnthropicClient implements AnthropicClient {
-    private String ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-    private String ANTHROPIC_VERSION = "2023-06-01";
-    private Integer MAX_TOKENS = 1024;
+    private String ANTHROPIC_API_URL;
+    private String ANTHROPIC_VERSION;
+    private String MAX_TOKENS;
 
-    public DefaultAnthropicClient() {}
+    public DefaultAnthropicClient() {
+        try {
+            Properties properties = PropertyConfig.loadConfig();
+            ANTHROPIC_API_URL = properties.getProperty("hospai.anthropic.url");
+            ANTHROPIC_VERSION = properties.getProperty("hospai.anthropic.version");
+            MAX_TOKENS = properties.getProperty("hospai.anthropic.maxTokens");
+        } catch (Exception ex) {
+            throw new IllegalStateException("Critical configuration missing: CRITICAL_PROPERTY");
+        }
+    }
 
     @Override
-    public CompletionResponse generateCompletion(CompletionRequest request){
+    public CompletionResponse generateCompletion(CompletionRequest request) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             ArrayNode arrayNode = objectMapper.valueToTree(request.messages());

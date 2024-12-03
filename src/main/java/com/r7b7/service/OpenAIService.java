@@ -5,7 +5,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import com.r7b7.client.OpenAIClient;
-import com.r7b7.client.factory.OpenAIClientFactory;
+import com.r7b7.client.factory.LLMClientFactory;
 import com.r7b7.entity.CompletionRequest;
 import com.r7b7.entity.CompletionResponse;
 import com.r7b7.entity.Param;
@@ -25,10 +25,11 @@ public class OpenAIService implements LLMService {
     @Override
     public LLMResponse generateResponse(LLMRequest request) {
         CompletionResponse response = null;
-        OpenAIClient client = OpenAIClientFactory.getClient();
+        OpenAIClient client = LLMClientFactory.getOpenAIClient();
         Map<String, Object> platformAllignedParams = getPlatformAllignedParams(request);
 
-        response = client.generateCompletion(new CompletionRequest(request.getPrompt(), platformAllignedParams, model, apiKey));
+        response = client
+                .generateCompletion(new CompletionRequest(request.getPrompt(), platformAllignedParams, model, apiKey));
         Map<String, Object> metadata = Map.of(
                 "model", model,
                 "provider", "openai");

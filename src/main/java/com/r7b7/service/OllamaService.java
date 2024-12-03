@@ -5,7 +5,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import com.r7b7.client.OllamaClient;
-import com.r7b7.client.factory.OllamaClientFactory;
+import com.r7b7.client.factory.LLMClientFactory;
 import com.r7b7.entity.CompletionRequest;
 import com.r7b7.entity.CompletionResponse;
 import com.r7b7.entity.Param;
@@ -22,7 +22,7 @@ public class OllamaService implements LLMService {
 
     @Override
     public LLMResponse generateResponse(LLMRequest request) {
-        OllamaClient client = OllamaClientFactory.getClient();
+        OllamaClient client = LLMClientFactory.getOllamaClient();
         Map<String, Object> platformAllignedParams = getPlatformAllignedParams(request);
 
         CompletionResponse response = client

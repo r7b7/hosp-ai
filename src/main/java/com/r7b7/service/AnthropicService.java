@@ -5,7 +5,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import com.r7b7.client.AnthropicClient;
-import com.r7b7.client.factory.AnthropicClientFactory;
+import com.r7b7.client.factory.LLMClientFactory;
 import com.r7b7.entity.CompletionRequest;
 import com.r7b7.entity.CompletionResponse;
 import com.r7b7.entity.Param;
@@ -24,7 +24,7 @@ public class AnthropicService implements LLMService {
 
     @Override
     public LLMResponse generateResponse(LLMRequest request) {
-        AnthropicClient client = AnthropicClientFactory.getClient();
+        AnthropicClient client = LLMClientFactory.getAnthropicClient();
         Map<String, Object> platformAllignedParams = null;
 
         platformAllignedParams = getPlatformAllignedParams(request);

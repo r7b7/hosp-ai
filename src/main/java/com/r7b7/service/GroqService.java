@@ -5,7 +5,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import com.r7b7.client.GroqClient;
-import com.r7b7.client.factory.GroqClientFactory;
+import com.r7b7.client.factory.LLMClientFactory;
 import com.r7b7.entity.CompletionRequest;
 import com.r7b7.entity.CompletionResponse;
 import com.r7b7.entity.Param;
@@ -25,7 +25,7 @@ public class GroqService implements LLMService {
     @Override
     public LLMResponse generateResponse(LLMRequest request) {
         CompletionResponse response = null;
-        GroqClient client = GroqClientFactory.getClient();
+        GroqClient client = LLMClientFactory.getGroqClient();
         Map<String, Object> platformAllignedParams = getPlatformAllignedParams(request);
 
         response = client
