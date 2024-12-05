@@ -4,9 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.r7b7.entity.Message;
-import com.r7b7.entity.Param;
 
-public interface LLMRequest {
+public interface ILLMRequest {
     List<Message> getPrompt();
-    Map<Param, Object> getParameters();
+    Map<String, Object> getParameters();
 }

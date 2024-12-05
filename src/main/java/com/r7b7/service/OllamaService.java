@@ -1,19 +1,20 @@
 package com.r7b7.service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
-import com.r7b7.client.OllamaClient;
-import com.r7b7.client.factory.OllamaClientFactory;
+import com.r7b7.client.IOllamaClient;
+import com.r7b7.client.factory.LLMClientFactory;
 import com.r7b7.entity.CompletionRequest;
 import com.r7b7.entity.CompletionResponse;
-import com.r7b7.entity.Param;
-import com.r7b7.model.BaseLLMResponse;
-import com.r7b7.model.LLMRequest;
-import com.r7b7.model.LLMResponse;
+import com.r7b7.entity.Message;
+import com.r7b7.entity.Role;
+import com.r7b7.model.ILLMRequest;
 
-public class OllamaService implements LLMService {
+public class OllamaService implements ILLMService {
     private final String model;
 
     public OllamaService(String model) {
@@ -21,37 +22,48 @@ public class OllamaService implements LLMService {
     }
 
     @Override
-    public LLMResponse generateResponse(LLMRequest request) {
-        OllamaClient client = OllamaClientFactory.getClient();
-        Map<String, Object> platformAllignedParams = getPlatformAllignedParams(request);
+    public CompletionResponse generateResponse(ILLMRequest request) {
+        IOllamaClient client = LLMClientFactory.getOllamaClient();
+        Map<String, Object> requestMap = new HashMap<>();
+        requestMap.put("model", this.model);
+        requestMap.put("messages", request.getPrompt());
 
-        CompletionResponse response = client
-                .generateCompletion(new CompletionRequest(request.getPrompt(), platformAllignedParams, model, null));
-        Map<String, Object> metadata = Map.of(
-                "model", model,
-                "provider", "Ollama");
+        Map<String, Object> optionsMap = new HashMap<>();
+        if (null != request.getParameters()) {
+            for (Map.Entry<String, Object> entry : request.getParameters().entrySet()) {
+                optionsMap.put(entry.getKey(), entry.getValue());
+            }
+        }
+        requestMap.put("options", optionsMap);
+        // override disabled features if set dynamically
+        requestMap.put("stream", false);
 
-        return new BaseLLMResponse(response, metadata);
+        CompletionResponse response = client.generateCompletion(new CompletionRequest(requestMap, null));
+        return response;
     }
 
     @Override
-    public CompletableFuture<LLMResponse> generateResponseAsync(LLMRequest request) {
+    public CompletableFuture<CompletionResponse> generateResponseAsync(ILLMRequest request) {
         return CompletableFuture.supplyAsync(() -> generateResponse(request));
     }
 
-    private Map<String, Object> getPlatformAllignedParams(LLMRequest request) {
-        Map<String, Object> platformAllignedParams = null;
-        if (null != request.getParameters()) {
-            Map<Param, String> keyMapping = Map.of(
-                    Param.seed, "seed",
-                    Param.temperature, "temperature");
+    @Override
+    public CompletionResponse generateResponse(String inputQuery) {
+        IOllamaClient client = LLMClientFactory.getOllamaClient();
+        Map<String, Object> requestMap = new HashMap<>();
+        requestMap.put("model", this.model);
+        List<Message> prompt = new ArrayList<>();
+        prompt.add(new Message(Role.user, inputQuery));
+        requestMap.put("messages", prompt);
+        // override disabled features if set dynamically
+        requestMap.put("stream", false);
 
-            platformAllignedParams = request.getParameters().entrySet().stream()
-                    .filter(entry -> keyMapping.containsKey(entry.getKey()))
-                    .collect(Collectors.toMap(
-                            entry -> keyMapping.get(entry.getKey()),
-                            Map.Entry::getValue));
-        }
-        return platformAllignedParams;
+        CompletionResponse response = client.generateCompletion(new CompletionRequest(requestMap, null));
+        return response;
+    }
+
+    @Override
+    public CompletableFuture<CompletionResponse> generateResponseAsync(String inputQuery) {
+        return CompletableFuture.supplyAsync(() -> generateResponse(inputQuery));
     }
 }

@@ -6,42 +6,41 @@ import java.util.concurrent.CompletableFuture;
 
 import com.r7b7.entity.CompletionResponse;
 import com.r7b7.entity.Message;
-import com.r7b7.entity.Param;
-import com.r7b7.entity.Role;
 import com.r7b7.model.BaseLLMRequest;
-import com.r7b7.model.LLMRequest;
-import com.r7b7.model.LLMResponse;
+import com.r7b7.model.ILLMRequest;
 
 public class PromptEngine {
-    private final LLMService llmService;
-    private final Message assistantMessage;
-    private final Map<Param, Object> params;
+    private final ILLMService llmService;
+    private final Map<String, Object> params;
+    private final List<Message> messages;
 
-    public PromptEngine(LLMService llmService) {
-        this(llmService, new Message(Role.assistant, "You are a helpful assistant"), null);
+    public PromptEngine(ILLMService llmService) {
+        this(llmService, null, null);
     }
 
-    public PromptEngine(LLMService llmService, Message assistantMessage, Map<Param, Object> params) {
+    public PromptEngine(ILLMService llmService, Map<String, Object> params, List<Message> messages) {
         this.llmService = llmService;
-        this.assistantMessage = assistantMessage;
         this.params = params;
+        this.messages = messages;
     }
 
-    public CompletionResponse getResponse(String inputQuery) {
-        Message userMsg = new Message(Role.user, inputQuery);
-        List<Message> messages = List.of(assistantMessage, userMsg);
-        LLMRequest request = new BaseLLMRequest(messages, params);
-        LLMResponse response = llmService.generateResponse(request);
-        return response.getContent();
+    public CompletionResponse sendQuery() {
+        ILLMRequest request = new BaseLLMRequest(this.messages, this.params);
+        CompletionResponse response = this.llmService.generateResponse(request);
+        return response;
     }
 
-    public CompletableFuture<CompletionResponse> getResponseAsync(String inputQuery) {
-        Message userMsg = new Message(Role.user, inputQuery);
-        List<Message> messages = List.of(assistantMessage, userMsg);
-        LLMRequest request = new BaseLLMRequest(messages, params);
-
-        return llmService.generateResponseAsync(request)
-                .thenApply(LLMResponse::getContent);
+    public CompletableFuture<CompletionResponse> sendQueryAsync() {
+        ILLMRequest request = new BaseLLMRequest(this.messages, this.params);
+        return this.llmService.generateResponseAsync(request);
     }
 
+    public CompletionResponse sendQuery(String inputQuery) {
+        CompletionResponse response = this.llmService.generateResponse(inputQuery);
+        return response;
+    }
+
+    public CompletableFuture<CompletionResponse> sendQueryAsync(String inputQuery) {
+        return this.llmService.generateResponseAsync(inputQuery);
+    }
 }

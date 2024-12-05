@@ -1,19 +1,21 @@
 package com.r7b7.service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
-import com.r7b7.client.AnthropicClient;
-import com.r7b7.client.factory.AnthropicClientFactory;
+import com.r7b7.client.IAnthropicClient;
+import com.r7b7.client.factory.LLMClientFactory;
 import com.r7b7.entity.CompletionRequest;
 import com.r7b7.entity.CompletionResponse;
-import com.r7b7.entity.Param;
-import com.r7b7.model.BaseLLMResponse;
-import com.r7b7.model.LLMRequest;
-import com.r7b7.model.LLMResponse;
+import com.r7b7.entity.Message;
+import com.r7b7.entity.Role;
+import com.r7b7.model.ILLMRequest;
+import com.r7b7.util.StringUtility;
 
-public class AnthropicService implements LLMService {
+public class AnthropicService implements ILLMService {
     private final String apiKey;
     private final String model;
 
@@ -23,38 +25,65 @@ public class AnthropicService implements LLMService {
     }
 
     @Override
-    public LLMResponse generateResponse(LLMRequest request) {
-        AnthropicClient client = AnthropicClientFactory.getClient();
-        Map<String, Object> platformAllignedParams = null;
+    public CompletionResponse generateResponse(ILLMRequest request) {
+        IAnthropicClient client = LLMClientFactory.getAnthropicClient();
+        Map<String, Object> requestMap = new HashMap<>();
+        requestMap.put("model", this.model);
+        String systemMessage = getSystemMessage(request);
+        if (!StringUtility.isNullOrEmpty(systemMessage)) {
+            requestMap.put("system", systemMessage);
+        }
+        requestMap.put("messages", request.getPrompt());
+        // set mandatory param if not set explicitly
+        requestMap.put("max_tokens", 1024);
+        if (null != request.getParameters()) {
+            for (Map.Entry<String, Object> entry : request.getParameters().entrySet()) {
+                requestMap.put(entry.getKey(), entry.getValue());
+            }
+        }
+        // override disabled features if set dynamically
+        requestMap.put("stream", false);
 
-        platformAllignedParams = getPlatformAllignedParams(request);
-        CompletionResponse response = client.generateCompletion(
-                new CompletionRequest(request.getPrompt(), platformAllignedParams, model, apiKey));
-
-        Map<String, Object> metadata = Map.of(
-                "model", model,
-                "provider", "anthropic");
-        return new BaseLLMResponse(response, metadata);
+        CompletionResponse response = client.generateCompletion(new CompletionRequest(requestMap, this.apiKey));
+        return response;
     }
 
     @Override
-    public CompletableFuture<LLMResponse> generateResponseAsync(LLMRequest request) {
+    public CompletableFuture<CompletionResponse> generateResponseAsync(ILLMRequest request) {
         return CompletableFuture.supplyAsync(() -> generateResponse(request));
     }
 
-    private Map<String, Object> getPlatformAllignedParams(LLMRequest request) {
-        Map<String, Object> platformAllignedParams = null;
-        if (null != request.getParameters()) {
-            Map<Param, String> keyMapping = Map.of(
-                    Param.max_token, "max_tokens",
-                    Param.temperature, "temperature");
+    @Override
+    public CompletionResponse generateResponse(String inputQuery) {
+        IAnthropicClient client = LLMClientFactory.getAnthropicClient();
+        Map<String, Object> requestMap = new HashMap<>();
+        requestMap.put("model", this.model);
+        List<Message> prompt = new ArrayList<>();
+        prompt.add(new Message(Role.user, inputQuery));
+        requestMap.put("messages", prompt);
+        // set mandatory param
+        requestMap.put("max_tokens", 1024);
+        // override disabled features if set dynamically
+        requestMap.put("stream", false);
 
-            platformAllignedParams = request.getParameters().entrySet().stream()
-                    .filter(entry -> keyMapping.containsKey(entry.getKey()))
-                    .collect(Collectors.toMap(
-                            entry -> keyMapping.get(entry.getKey()),
-                            Map.Entry::getValue));
-        }
-        return platformAllignedParams;
+        CompletionResponse response = client.generateCompletion(new CompletionRequest(requestMap, this.apiKey));
+        return response;
+    }
+
+    @Override
+    public CompletableFuture<CompletionResponse> generateResponseAsync(String inputQuery) {
+        return CompletableFuture.supplyAsync(() -> generateResponse(inputQuery));
+    }
+
+    private String getSystemMessage(ILLMRequest request) {
+        String systemMessage = request.getPrompt().stream()
+                .filter(msg -> msg.role() == Role.system)
+                .findFirst()
+                .map(msg -> {
+                    request.getPrompt().remove(msg);
+                    return msg.content();
+                })
+                .orElse(null);
+        return systemMessage;
     }
 }
