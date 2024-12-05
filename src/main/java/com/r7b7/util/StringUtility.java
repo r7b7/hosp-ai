@@ -3,7 +3,7 @@ package com.r7b7.util;
 import java.net.URI;
 
 public final class StringUtility {
-    
+
     public static boolean isNullOrEmpty(String str) {
         return str == null || str.isEmpty();
     }
@@ -13,7 +13,7 @@ public final class StringUtility {
             return false;
         }
         try {
-            URI.create(url).toURL(); 
+            URI.create(url).toURL();
             return true;
         } catch (Exception e) {
             return false;

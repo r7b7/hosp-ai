@@ -9,8 +9,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.r7b7.client.model.AnthropicResponse;
 import com.r7b7.client.model.Message;
 import com.r7b7.config.PropertyConfig;
@@ -18,17 +16,15 @@ import com.r7b7.entity.CompletionRequest;
 import com.r7b7.entity.CompletionResponse;
 import com.r7b7.entity.ErrorResponse;
 
-public class DefaultAnthropicClient implements AnthropicClient {
+public class DefaultAnthropicClient implements IAnthropicClient {
     private String ANTHROPIC_API_URL;
     private String ANTHROPIC_VERSION;
-    private String MAX_TOKENS;
 
     public DefaultAnthropicClient() {
         try {
             Properties properties = PropertyConfig.loadConfig();
             ANTHROPIC_API_URL = properties.getProperty("hospai.anthropic.url");
             ANTHROPIC_VERSION = properties.getProperty("hospai.anthropic.version");
-            MAX_TOKENS = properties.getProperty("hospai.anthropic.maxTokens");
         } catch (Exception ex) {
             throw new IllegalStateException("Critical configuration missing: CRITICAL_PROPERTY");
         }
@@ -38,30 +34,14 @@ public class DefaultAnthropicClient implements AnthropicClient {
     public CompletionResponse generateCompletion(CompletionRequest request) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            ArrayNode arrayNode = objectMapper.valueToTree(request.messages());
-            ObjectNode requestBody = objectMapper.createObjectNode();
-            requestBody.put("model", request.model());
-            requestBody.set("messages", arrayNode);
-
-            if (null != request.params()) {
-                for (Map.Entry<String, Object> entry : request.params().entrySet()) {
-                    Object value = entry.getValue();
-                    if (value instanceof String) {
-                        requestBody.put(entry.getKey(), (String) value);
-                    } else if (value instanceof Integer) {
-                        requestBody.put(entry.getKey(), (Integer) value);
-                    }
-                }
-            } else {
-                requestBody.put("max_tokens", MAX_TOKENS);
-            }
+            String jsonRequest = objectMapper.writeValueAsString(request.requestBody());
 
             HttpRequest httpRequest = HttpRequest.newBuilder()
                     .uri(URI.create(this.ANTHROPIC_API_URL))
                     .header("Content-Type", "application/json")
                     .header("x-api-key", request.apiKey())
                     .header("anthropic-version", ANTHROPIC_VERSION)
-                    .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonRequest))
                     .build();
 
             HttpResponse<String> response = HttpClient.newHttpClient().send(httpRequest,
@@ -69,8 +49,8 @@ public class DefaultAnthropicClient implements AnthropicClient {
             if (response.statusCode() == 200) {
                 return extractResponseText(response.body());
             } else {
-                return new CompletionResponse(null, response, new ErrorResponse(
-                        "Request sent to LLM failed with status code " + response, null));
+                return new CompletionResponse(null, null, new ErrorResponse(
+                        "Request sent to LLM failed: " + response.statusCode() + response.body(), null));
             }
         } catch (Exception ex) {
             return new CompletionResponse(null, null, new ErrorResponse("Request processing failed", ex));
@@ -82,13 +62,21 @@ public class DefaultAnthropicClient implements AnthropicClient {
         List<Message> msgs = null;
         AnthropicResponse response = null;
         ErrorResponse error = null;
+        Map<String, Object> metadata = null;
+
         try {
             ObjectMapper mapper = new ObjectMapper();
             response = mapper.readValue(responseBody, AnthropicResponse.class);
             msgs = response.content().stream().map(content -> new Message(content.type(), content.text())).toList();
+            metadata = Map.of(
+                    "id", response.id(),
+                    "model", response.model(),
+                    "provider", "Anthropic",
+                    "input_tokens", response.usage().inputTokens(),
+                    "output_tokens", response.usage().outputTokens());
         } catch (Exception ex) {
             error = new ErrorResponse("Exception occurred in extracting response", ex);
         }
-        return new CompletionResponse(msgs, response, error);
+        return new CompletionResponse(msgs, metadata, error);
     }
 }

@@ -4,14 +4,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-import com.r7b7.App;
-
 public class PropertyConfig {
+    private static Properties properties;
 
     public static Properties loadConfig() throws IOException {
-        Properties properties = new Properties();
-        try (InputStream input = App.class.getClassLoader().getResourceAsStream("application.properties")) {
-            properties.load(input);
+        if (null == properties) {
+            properties = new Properties();
+            try (InputStream input = PropertyConfig.class.getClassLoader()
+                    .getResourceAsStream("application.properties")) {
+                properties.load(input);
+            }
         }
         return properties;
     }

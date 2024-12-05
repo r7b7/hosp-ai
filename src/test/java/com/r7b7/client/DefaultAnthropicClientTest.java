@@ -11,7 +11,10 @@ import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,12 +44,16 @@ public class DefaultAnthropicClientTest {
     @Test
     public void testGenerateCompletion_ValidRequest() throws IOException, InterruptedException {
         try (MockedStatic<HttpClient> mockedStatic = mockStatic(HttpClient.class)) {
+            Map<String, Object> requestMap = new HashMap<>();
+            requestMap.put("model", "test-model");
+            List<Message> prompt = new ArrayList<>();
+            prompt.add(new Message(Role.system, "You are a helpful assistant"));
+            requestMap.put("messages", prompt);
+            CompletionRequest request = new CompletionRequest(requestMap, "api-key");
 
-            CompletionRequest request = new CompletionRequest(List.of(new Message(Role.assistant, "Hello")), null,
-                    "test-model", "api-key");
             HttpResponse<String> mockResponse = mock(HttpResponse.class);
             when(mockResponse.statusCode()).thenReturn(200);
-            when(mockResponse.body()).thenReturn("{\"content\": [{\"type\": \"assistant\", \"text\": \"Hi there!\"}]}");
+            when(mockResponse.body()).thenReturn("{\"id\": \"msg_01KVZJSawLDxgY8LvDm2w9KP\",\"model\": \"claude-3-5-sonnet-20241022\",\"content\": [{\"type\": \"assistant\", \"text\": \"Hi there!\"}], \"usage\":{\"input_tokens\": 48,\"output_tokens\": 70}}");
             when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
                     .thenReturn(mockResponse);
             mockedStatic.when(HttpClient::newHttpClient).thenReturn(mockHttpClient);
@@ -63,11 +70,16 @@ public class DefaultAnthropicClientTest {
     public void testGenerateCompletion_WithoutParams() throws IOException, InterruptedException {
         try (MockedStatic<HttpClient> mockedStatic = mockStatic(HttpClient.class)) {
 
-            CompletionRequest request = new CompletionRequest(List.of(new Message(Role.assistant, "Hello")), null,
-                    "test-model", "api-key");
+            Map<String, Object> requestMap = new HashMap<>();
+            requestMap.put("model", "test-model");
+            List<Message> prompt = new ArrayList<>();
+            prompt.add(new Message(Role.system, "You are a helpful assistant"));
+            requestMap.put("messages", prompt);
+            CompletionRequest request = new CompletionRequest(requestMap, "api-key");
+
             HttpResponse<String> mockResponse = mock(HttpResponse.class);
             when(mockResponse.statusCode()).thenReturn(200);
-            when(mockResponse.body()).thenReturn("{\"content\": [{\"type\": \"assistant\", \"text\": \"Hi there!\"}]}");
+            when(mockResponse.body()).thenReturn("{\"id\": \"msg_01KVZJSawLDxgY8LvDm2w9KP\",\"model\": \"claude-3-5-sonnet-20241022\",\"content\": [{\"type\": \"assistant\", \"text\": \"Hi there!\"}], \"usage\":{\"input_tokens\": 48,\"output_tokens\": 70}}");
             when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
                     .thenReturn(mockResponse);
             mockedStatic.when(HttpClient::newHttpClient).thenReturn(mockHttpClient);
@@ -83,8 +95,13 @@ public class DefaultAnthropicClientTest {
     public void testGenerateCompletion_InvalidApiKey() throws IOException, InterruptedException {
         try (MockedStatic<HttpClient> mockedStatic = mockStatic(HttpClient.class)) {
 
-            CompletionRequest request = new CompletionRequest(List.of(new Message(Role.assistant, "Hello")), null,
-                    "test-model", "invalid-api-key");
+            Map<String, Object> requestMap = new HashMap<>();
+            requestMap.put("model", "test-model");
+            List<Message> prompt = new ArrayList<>();
+            prompt.add(new Message(Role.system, "You are a helpful assistant"));
+            requestMap.put("messages", prompt);
+            CompletionRequest request = new CompletionRequest(requestMap, "api-key");
+
             HttpResponse<String> mockResponse = mock(HttpResponse.class);
             when(mockResponse.statusCode()).thenReturn(401);
 
@@ -104,8 +121,12 @@ public class DefaultAnthropicClientTest {
     public void testGenerateCompletion_HandleException() throws IOException, InterruptedException {
 
         // Arrange
-        CompletionRequest request = new CompletionRequest(List.of(new Message(Role.assistant, "Hello")), null,
-                "test-model", "invalid-api-key");
+        Map<String, Object> requestMap = new HashMap<>();
+            requestMap.put("model", "test-model");
+            List<Message> prompt = new ArrayList<>();
+            prompt.add(new Message(Role.system, "You are a helpful assistant"));
+            requestMap.put("messages", prompt);
+            CompletionRequest request = new CompletionRequest(requestMap, "api-key");
 
         // Mock the HttpClient to throw an exception
         when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))

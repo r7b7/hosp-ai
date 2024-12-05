@@ -4,13 +4,12 @@ import java.util.List;
 import java.util.Map;
 
 import com.r7b7.entity.Message;
-import com.r7b7.entity.Param;
 
-public class BaseLLMRequest implements LLMRequest {
+public class BaseLLMRequest implements ILLMRequest {
     private final List<Message> messages;
-    private final Map<Param, Object> parameters;
+    private final Map<String, Object> parameters;
 
-    public BaseLLMRequest(List<Message> messages, Map<Param, Object> parameters) {
+    public BaseLLMRequest(List<Message> messages, Map<String, Object> parameters) {
         this.messages = messages;
         this.parameters = parameters;
     }
@@ -21,7 +20,7 @@ public class BaseLLMRequest implements LLMRequest {
     }
 
     @Override
-    public Map<Param, Object> getParameters() {
+    public Map<String, Object> getParameters() {
         return parameters;
     }
 }

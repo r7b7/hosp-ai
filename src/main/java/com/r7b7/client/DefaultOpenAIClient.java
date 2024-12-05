@@ -6,55 +6,47 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.r7b7.client.model.Message;
 import com.r7b7.client.model.OpenAIResponse;
+import com.r7b7.config.PropertyConfig;
 import com.r7b7.entity.CompletionRequest;
 import com.r7b7.entity.CompletionResponse;
 import com.r7b7.entity.ErrorResponse;
 
-public class DefaultOpenAIClient implements OpenAIClient {
-    private String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
+public class DefaultOpenAIClient implements IOpenAIClient {
+    private String OPENAI_API_URL;
 
     public DefaultOpenAIClient() {
+        try {
+            Properties properties = PropertyConfig.loadConfig();
+            OPENAI_API_URL = properties.getProperty("hospai.openai.url");
+        } catch (Exception ex) {
+            throw new IllegalStateException("Critical configuration missing: CRITICAL_PROPERTY");
+        }
     }
 
     @Override
     public CompletionResponse generateCompletion(CompletionRequest request) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            ArrayNode arrayNode = objectMapper.valueToTree(request.messages());
-            ObjectNode requestBody = objectMapper.createObjectNode();
-            requestBody.put("model", request.model());
-            requestBody.set("messages", arrayNode);
-
-            if (null != request.params()) {
-                for (Map.Entry<String, Object> entry : request.params().entrySet()) {
-                    Object value = entry.getValue();
-                    if (value instanceof String) {
-                        requestBody.put(entry.getKey(), (String) value);
-                    } else if (value instanceof Integer) {
-                        requestBody.put(entry.getKey(), (Integer) value);
-                    }
-                }
-            }
+            String jsonRequest = objectMapper.writeValueAsString(request.requestBody());
 
             HttpRequest httpRequest = HttpRequest.newBuilder()
                     .uri(URI.create(this.OPENAI_API_URL))
                     .header("Content-Type", "application/json")
                     .header("Authorization", "Bearer " + request.apiKey())
-                    .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonRequest))
                     .build();
             HttpResponse<String> response = HttpClient.newHttpClient().send(httpRequest,
                     HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() == 200) {
                 return extractResponseText(response.body());
             } else {
-                return new CompletionResponse(null, response, new ErrorResponse(
-                        "Request sent to LLM failed with status code " + response.statusCode(), null));
+                return new CompletionResponse(null, null, new ErrorResponse(
+                        "Request sent to LLM failed: " + response.statusCode() + response.body(), null));
             }
         } catch (Exception ex) {
             return new CompletionResponse(null, null, new ErrorResponse("Request processing failed", ex));
@@ -65,15 +57,23 @@ public class DefaultOpenAIClient implements OpenAIClient {
         List<Message> msgs = null;
         OpenAIResponse response = null;
         ErrorResponse error = null;
+        Map<String, Object> metadata = null;
 
         try {
             ObjectMapper mapper = new ObjectMapper();
             response = mapper.readValue(responseBody, OpenAIResponse.class);
             msgs = response.choices().stream()
                     .map(choice -> new Message(choice.message().role(), choice.message().content())).toList();
+            metadata = Map.of(
+                    "id", response.id(),
+                    "model", response.model(),
+                    "provider", "OpenAi",
+                    "prompt_tokens", response.usage().promptTokens(),
+                    "completion_tokens", response.usage().completionTokens(),
+                    "total_tokens", response.usage().totalTokens());
         } catch (Exception ex) {
             error = new ErrorResponse("Exception occurred in extracting response", ex);
         }
-        return new CompletionResponse(msgs, response, error);
+        return new CompletionResponse(msgs, metadata, error);
     }
 }

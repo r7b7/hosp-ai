@@ -11,7 +11,10 @@ import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,13 +43,16 @@ public class DefaultOllamaClientTest {
         @Test
         public void testGenerateCompletion_ValidRequest() throws IOException, InterruptedException {
                 try (MockedStatic<HttpClient> mockedStatic = mockStatic(HttpClient.class)) {
-                        CompletionRequest request = new CompletionRequest(List.of(new Message(Role.assistant, "Hello")),
-                                        null,
-                                        "test-model", null);
+                        Map<String, Object> requestMap = new HashMap<>();
+                        requestMap.put("model", "test-model");
+                        List<Message> prompt = new ArrayList<>();
+                        prompt.add(new Message(Role.system, "You are a helpful assistant"));
+                        requestMap.put("messages", prompt);
+                        CompletionRequest request = new CompletionRequest(requestMap, "api-key");
                         HttpResponse<String> mockResponse = mock(HttpResponse.class);
                         when(mockResponse.statusCode()).thenReturn(200);
                         when(mockResponse.body()).thenReturn(
-                                        "{\"model\":\"test\",\"message\":{\"role\": \"assistant\", \"content\": \"Hi there!\"}}");
+                                        "{\"model\":\"test\",\"message\":{\"role\": \"assistant\", \"content\": \"Hi there!\"},\"total_duration\":5191566416,\"eval_duration\":4799921000}");
                         when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
                                         .thenReturn(mockResponse);
                         mockedStatic.when(HttpClient::newHttpClient).thenReturn(mockHttpClient);
@@ -62,13 +68,16 @@ public class DefaultOllamaClientTest {
         @Test
         public void testGenerateCompletion_WithoutParams() throws IOException, InterruptedException {
                 try (MockedStatic<HttpClient> mockedStatic = mockStatic(HttpClient.class)) {
-                        CompletionRequest request = new CompletionRequest(List.of(new Message(Role.assistant, "Hello")),
-                                        null,
-                                        "test-model", null);
+                        Map<String, Object> requestMap = new HashMap<>();
+                        requestMap.put("model", "test-model");
+                        List<Message> prompt = new ArrayList<>();
+                        prompt.add(new Message(Role.system, "You are a helpful assistant"));
+                        requestMap.put("messages", prompt);
+                        CompletionRequest request = new CompletionRequest(requestMap, "api-key");
                         HttpResponse<String> mockResponse = mock(HttpResponse.class);
                         when(mockResponse.statusCode()).thenReturn(200);
                         when(mockResponse.body()).thenReturn(
-                                        "{\"model\":\"test\",\"message\":{\"role\": \"assistant\", \"content\": \"Hi there!\"}}");
+                                        "{\"model\":\"test\",\"message\":{\"role\": \"assistant\", \"content\": \"Hi there!\"},\"total_duration\":5191566416,\"eval_duration\":4799921000}");
                         when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
                                         .thenReturn(mockResponse);
                         mockedStatic.when(HttpClient::newHttpClient).thenReturn(mockHttpClient);
@@ -83,9 +92,12 @@ public class DefaultOllamaClientTest {
         @Test
         public void testGenerateCompletion_HandleException() throws IOException, InterruptedException {
                 try (MockedStatic<HttpClient> mockedStatic = mockStatic(HttpClient.class)) {
-                        CompletionRequest request = new CompletionRequest(List.of(new Message(Role.assistant, "Hello")),
-                                        null,
-                                        "test-model", null);
+                        Map<String, Object> requestMap = new HashMap<>();
+                        requestMap.put("model", "test-model");
+                        List<Message> prompt = new ArrayList<>();
+                        prompt.add(new Message(Role.system, "You are a helpful assistant"));
+                        requestMap.put("messages", prompt);
+                        CompletionRequest request = new CompletionRequest(requestMap, "api-key");
 
                         when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
                                         .thenThrow(new IOException("Mocked IOException"));

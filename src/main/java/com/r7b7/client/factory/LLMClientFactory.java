@@ -1,31 +1,31 @@
 package com.r7b7.client.factory;
 
-import com.r7b7.client.AnthropicClient;
+import com.r7b7.client.IAnthropicClient;
 import com.r7b7.client.DefaultAnthropicClient;
 import com.r7b7.client.DefaultGroqClient;
 import com.r7b7.client.DefaultOllamaClient;
 import com.r7b7.client.DefaultOpenAIClient;
-import com.r7b7.client.GroqClient;
-import com.r7b7.client.OllamaClient;
-import com.r7b7.client.OpenAIClient;
+import com.r7b7.client.IGroqClient;
+import com.r7b7.client.IOllamaClient;
+import com.r7b7.client.IOpenAIClient;
 
 public class LLMClientFactory {
-    private static AnthropicClient currentAnthropicClient;
-    private static GroqClient currentGroqClient;
-    private static OllamaClient currentOllamaClient;
-    private static OpenAIClient currentOpenAIClient;
+    private static IAnthropicClient currentAnthropicClient;
+    private static IGroqClient currentGroqClient;
+    private static IOllamaClient currentOllamaClient;
+    private static IOpenAIClient currentOpenAIClient;
 
     // Open AI Client
-    public static OpenAIClient createDefaultOpenAIClient() {
+    public static IOpenAIClient createDefaultOpenAIClient() {
         DefaultOpenAIClient client = new DefaultOpenAIClient();
         return client;
     }
 
-    public static void setOpenAIClient(OpenAIClient client) {
+    public static void setOpenAIClient(IOpenAIClient client) {
         currentOpenAIClient = client;
     }
 
-    public static OpenAIClient getOpenAIClient() {
+    public static IOpenAIClient getOpenAIClient() {
         if (null == currentOpenAIClient) {
             currentOpenAIClient = createDefaultOpenAIClient();
         }
@@ -33,16 +33,16 @@ public class LLMClientFactory {
     }
 
     // Anthropic Client
-    public static AnthropicClient createDefaultAnthropicClient() {
+    public static IAnthropicClient createDefaultAnthropicClient() {
         DefaultAnthropicClient client = new DefaultAnthropicClient();
         return client;
     }
 
-    public static void setAnthropicClient(AnthropicClient client) {
+    public static void setAnthropicClient(IAnthropicClient client) {
         currentAnthropicClient = client;
     }
 
-    public static AnthropicClient getAnthropicClient() {
+    public static IAnthropicClient getAnthropicClient() {
         if (null == currentAnthropicClient) {
             currentAnthropicClient = createDefaultAnthropicClient();
         }
@@ -50,16 +50,16 @@ public class LLMClientFactory {
     }
 
     // Groq Client
-    public static GroqClient createDefaultGroqClient() {
+    public static IGroqClient createDefaultGroqClient() {
         DefaultGroqClient client = new DefaultGroqClient();
         return client;
     }
 
-    public static void setGroqClient(GroqClient client) {
+    public static void setGroqClient(IGroqClient client) {
         currentGroqClient = client;
     }
 
-    public static GroqClient getGroqClient() {
+    public static IGroqClient getGroqClient() {
         if (null == currentGroqClient) {
             currentGroqClient = createDefaultGroqClient();
         }
@@ -67,16 +67,16 @@ public class LLMClientFactory {
     }
 
     // Ollama Client
-    public static OllamaClient createDefaultOllamaClient() {
+    public static IOllamaClient createDefaultOllamaClient() {
         DefaultOllamaClient client = new DefaultOllamaClient();
         return client;
     }
 
-    public static void setOllamaClient(OllamaClient client) {
+    public static void setOllamaClient(IOllamaClient client) {
         currentOllamaClient = client;
     }
 
-    public static OllamaClient getOllamaClient() {
+    public static IOllamaClient getOllamaClient() {
         if (null == currentOllamaClient) {
             currentOllamaClient = createDefaultOllamaClient();
         }

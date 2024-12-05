@@ -2,7 +2,6 @@ package com.r7b7.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -12,35 +11,65 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import com.r7b7.entity.CompletionResponse;
-import com.r7b7.model.LLMRequest;
-import com.r7b7.model.LLMResponse;
+import com.r7b7.entity.Message;
+import com.r7b7.entity.Role;
+import com.r7b7.model.ILLMRequest;
 
 public class PromptEngineTest {
-    private LLMService mockLlmService;
+    @Mock
+    private ILLMService mockLlmService;
+
+    @InjectMocks
     private PromptEngine promptEngine;
 
     @BeforeEach
     void setUp() {
-        mockLlmService = Mockito.mock(LLMService.class);
-        promptEngine = new PromptEngine(mockLlmService);
+        MockitoAnnotations.openMocks(this);
+
+        // mockLlmService = Mockito.mock(ILLMService.class);
     }
 
     @Test
-    void testGetResponse() {
+    void testSendQuery_Text_Input() {
         String inputQuery = "What is the weather today?";
         String expectedContent = "test content";
 
-        LLMResponse mockResponse = mock(LLMResponse.class);
-        when(mockResponse.getContent()).thenReturn(createMockCompletionResponse("Test prompt"));
-        when(mockLlmService.generateResponse(any(LLMRequest.class))).thenReturn(mockResponse);
+        promptEngine = new PromptEngine(mockLlmService);
 
-        CompletionResponse response = promptEngine.getResponse(inputQuery);
+        when(mockLlmService.generateResponse(inputQuery))
+                .thenReturn(createMockCompletionResponse("Test prompt"));
+
+        CompletionResponse response = promptEngine.sendQuery(inputQuery);
 
         assertEquals(expectedContent, response.messages().get(0).content());
-        verify(mockLlmService, times(1)).generateResponse(any(LLMRequest.class));
+        verify(mockLlmService, times(1)).generateResponse(inputQuery);
+    }
+
+    @Test
+    void testSendQuery_Builder_Input() {
+        String expectedContent = "test content";
+
+        when(mockLlmService.generateResponse(any(ILLMRequest.class)))
+                .thenReturn(createMockCompletionResponse("Test prompt"));
+
+        PromptBuilder builder = new PromptBuilder()
+                .addMessage(new Message(Role.system, "Give output in consistent format"))
+                .addMessage(new Message(Role.user, "what's the stock symbol of ARCHER Aviation?"))
+                .addMessage(new Message(Role.assistant, "{\"company\":\"Archer\", \"symbol\":\"ACHR\"}"))
+                .addMessage(new Message(Role.user, "what's the stock symbol of Palantir technology?"))
+                .addParam("temperature", 0.7)
+                .addParam("max_tokens", 150);
+        promptEngine = builder.build(mockLlmService);
+
+        CompletionResponse response = promptEngine.sendQuery();
+
+        assertEquals(expectedContent, response.messages().get(0).content());
+        verify(mockLlmService, times(1)).generateResponse(any(ILLMRequest.class));
     }
 
     private CompletionResponse createMockCompletionResponse(String content) {
