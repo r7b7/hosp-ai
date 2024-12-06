@@ -10,13 +10,26 @@ Universal LLM Provider Connector for Java
 [![Wiki](https://img.shields.io/badge/Documentation-Wiki-blue)](https://github.com/r7b7/hosp-ai/wiki)
 
 ## Why HOSP-AI?
-TBA
+When I first started exploring LLMs and Neural Networks in Python, experimenting was easy. But when I switched back to Java—the language I trust for its scalability and performance—I hit a roadblock. There weren’t any simple tools to help me work seamlessly with multiple LLM providers.
+
+This had to be fixed.
+
+The result? Hosp-AI 
+
+A library designed for quick prototyping with LLMs, and fully compatible with production-ready frameworks like Spring Boot.
 
 ## Contributions are Welcome (in need of volunteers)
 1. Fork the Repo
 2. Create a Branch - name it based on issue-fix, documentation, feature
 3. Pull a PR
 
+## Features
+1. Support for following LLM providers:
+
+   1. OpenAI, Anthropic, Groq, Ollama
+   2. PromptBuilder to build complex prompts
+   3. Support default to custom client implementations without refactoring entire codebases
+      
 ## Installation
 1. Add jitpack repository in pom file
     ```bash
