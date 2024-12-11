@@ -8,10 +8,12 @@ import java.util.concurrent.CompletableFuture;
 
 import com.r7b7.client.IAnthropicClient;
 import com.r7b7.client.factory.LLMClientFactory;
+import com.r7b7.entity.AnthropicTool;
 import com.r7b7.entity.CompletionRequest;
 import com.r7b7.entity.CompletionResponse;
 import com.r7b7.entity.Message;
 import com.r7b7.entity.Role;
+import com.r7b7.entity.Tool;
 import com.r7b7.model.ILLMRequest;
 import com.r7b7.util.StringUtility;
 
@@ -34,6 +36,15 @@ public class AnthropicService implements ILLMService {
             requestMap.put("system", systemMessage);
         }
         requestMap.put("messages", request.getPrompt());
+        if (null != request.getFunctions()) {
+            List<AnthropicTool> tool = request.getFunctions().stream().map(func -> new AnthropicTool(func.name(), func.description(), func.parameters())).toList();
+            requestMap.put("tools", tool);
+        }
+        if (null != request.getToolChoice() && request.getToolChoice() instanceof String) {
+            requestMap.put("tool_choice", Map.of("type", request.getToolChoice()));
+        } else {
+            requestMap.put("tool_choice", request.getToolChoice());
+        }
         // set mandatory param if not set explicitly
         requestMap.put("max_tokens", 1024);
         if (null != request.getParameters()) {

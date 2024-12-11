@@ -12,6 +12,7 @@ import com.r7b7.entity.CompletionRequest;
 import com.r7b7.entity.CompletionResponse;
 import com.r7b7.entity.Message;
 import com.r7b7.entity.Role;
+import com.r7b7.entity.Tool;
 import com.r7b7.model.ILLMRequest;
 
 public class OllamaService implements ILLMService {
@@ -27,6 +28,13 @@ public class OllamaService implements ILLMService {
         Map<String, Object> requestMap = new HashMap<>();
         requestMap.put("model", this.model);
         requestMap.put("messages", request.getPrompt());
+        if (null != request.getFunctions()) {
+            List<Tool> tool = request.getFunctions().stream().map(func -> new Tool("function", func)).toList();
+            requestMap.put("tools", tool);
+        }
+        if (null != request.getToolChoice()) {
+            requestMap.put("tool_choice", request.getToolChoice());
+        }
 
         Map<String, Object> optionsMap = new HashMap<>();
         if (null != request.getParameters()) {

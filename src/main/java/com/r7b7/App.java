@@ -17,6 +17,22 @@ import com.r7b7.service.PromptEngine;
 public class App {
     public static void main(String[] args) {
        
+        
+             ILLMService service = LLMServiceFactory.createService(Provider.OLLAMA, "mistral");
+
+              Map<String, Object> parameters = getParameters();
+        ToolFunction function = new ToolFunction("get_current_weather",
+                "Get the current weather in a given location in fahrenheit",
+                parameters);
+
+        PromptEngine engine = new PromptBuilder()
+                .addMessage(new Message(Role.user, "What's the weather in Chicago today?"))
+                .addTool(function)
+                .addToolChoice("auto")
+                .build(service);
+
+        CompletionResponse response = engine.sendQuery();
+        System.out.println(response);
     }
 
     private static Map<String, Object> getParameters() {
