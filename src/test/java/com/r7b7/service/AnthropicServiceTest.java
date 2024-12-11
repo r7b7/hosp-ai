@@ -115,13 +115,13 @@ public class AnthropicServiceTest {
         messages.add(new Message(Role.system, "You are a helpful assistant"));
         messages.add(new Message(Role.assistant, "You are a helpful assistant"));
         messages.add(new Message(Role.user, prompt));
-        ILLMRequest request = new BaseLLMRequest(messages, null);
+        ILLMRequest request = new BaseLLMRequest(messages, null, null, null);
         return request;
     }
 
     private CompletionResponse createMockCompletionResponse(String content) {
         List<com.r7b7.client.model.Message> messages = new ArrayList<>();
-        com.r7b7.client.model.Message msg = new com.r7b7.client.model.Message("user", "test content");
+        com.r7b7.client.model.Message msg = new com.r7b7.client.model.Message("user", "test content", null);
         messages.add(msg);
         Map<String, Object> metaData = new HashMap<>();
         metaData.put("model", TEST_MODEL);
@@ -140,7 +140,7 @@ public class AnthropicServiceTest {
                 "temperature", 0.7,
                 "max_token", 1000);
 
-        ILLMRequest request = new BaseLLMRequest(messages, params);
+        ILLMRequest request = new BaseLLMRequest(messages, params, null, null);
         return request;
     }
 }
