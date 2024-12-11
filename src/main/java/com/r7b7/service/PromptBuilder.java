@@ -15,34 +15,34 @@ public class PromptBuilder {
     private Object toolChoice = "none";
 
     public PromptBuilder addMessage(Message message) {
-        messages.add(message);
+        this.messages.add(message);
         return this;
     }
 
     public PromptBuilder addParam(String key, Object value) {
-        params.put(key, value);
+        this.params.put(key, value);
         return this;
     }
 
     public PromptBuilder addTool(ToolFunction function) {
-        functions.add(function);
+        this.functions.add(function);
         return this;
     }
 
     public PromptBuilder addToolChoice(String choice) {
-        toolChoice = choice;
+        this.toolChoice = choice;
         return this;
     }
 
     public List<Message> getMessages() {
-        return messages;
+        return this.messages;
     }
 
     public Map<String, Object> getParams() {
-        return params;
+        return this.params;
     }
 
     public PromptEngine build(ILLMService service) {
-        return new PromptEngine(service, params, messages);
+        return new PromptEngine(service, this.params, this.messages, this.functions, this.toolChoice);
     }
 }
