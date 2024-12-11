@@ -63,7 +63,9 @@ public class DefaultOpenAIClient implements IOpenAIClient {
             ObjectMapper mapper = new ObjectMapper();
             response = mapper.readValue(responseBody, OpenAIResponse.class);
             msgs = response.choices().stream()
-                    .map(choice -> new Message(choice.message().role(), choice.message().content())).toList();
+                    .map(choice -> new Message(choice.message().role(), choice.message().content(),
+                            choice.message().toolCalls()))
+                    .toList();
             metadata = Map.of(
                     "id", response.id(),
                     "model", response.model(),
