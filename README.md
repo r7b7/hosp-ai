@@ -24,11 +24,13 @@ A library designed for quick prototyping with LLMs, and fully compatible with pr
 3. Pull a PR
 
 ## Features
-1. Support for following LLM providers:
+1. Support for following LLM providers: OpenAI, Anthropic, Groq, Ollama
+2. PromptBuilder to build complex prompts
+3. Support to customize default client implementations (Flexible approach for integrating with frameworks like SpringBoot)
 
-   1. OpenAI, Anthropic, Groq, Ollama
-   2. PromptBuilder to build complex prompts
-   3. Support default to custom client implementations without refactoring entire codebases
+### Features in Pipeline
+1. Image Support
+2. Stream Response
       
 ## Installation
 1. Add jitpack repository in pom file

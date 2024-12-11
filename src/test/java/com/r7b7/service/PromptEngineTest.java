@@ -74,7 +74,7 @@ public class PromptEngineTest {
 
     private CompletionResponse createMockCompletionResponse(String content) {
         List<com.r7b7.client.model.Message> messages = new ArrayList<>();
-        com.r7b7.client.model.Message msg = new com.r7b7.client.model.Message("user", "test content");
+        com.r7b7.client.model.Message msg = new com.r7b7.client.model.Message("user", "test content", null);
         messages.add(msg);
         CompletionResponse response = new CompletionResponse(messages, null, null);
         return response;

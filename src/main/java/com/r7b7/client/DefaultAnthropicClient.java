@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.r7b7.client.model.AnthroToolResponse;
 import com.r7b7.client.model.AnthropicResponse;
 import com.r7b7.client.model.Message;
 import com.r7b7.config.PropertyConfig;
@@ -67,7 +68,14 @@ public class DefaultAnthropicClient implements IAnthropicClient {
         try {
             ObjectMapper mapper = new ObjectMapper();
             response = mapper.readValue(responseBody, AnthropicResponse.class);
-            msgs = response.content().stream().map(content -> new Message(content.type(), content.text())).toList();
+            final String role = response.role();
+            msgs = response.content().stream().map(content -> {
+                if(content.type().equalsIgnoreCase("tool_use")){
+                    return new Message(role, content.text(), List.of(new AnthroToolResponse(content.type(), content.id(), content.name(), content.input())));
+                } else {
+                    return new Message(role, content.text(), null);
+                }
+            }).toList();
             metadata = Map.of(
                     "id", response.id(),
                     "model", response.model(),
