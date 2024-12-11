@@ -22,6 +22,7 @@ A library designed for quick prototyping with LLMs, and fully compatible with pr
 1. Fork the Repo
 2. Create a Branch - name it based on issue-fix, documentation, feature
 3. Pull a PR
+4. Tools Support
 
 ## Features
 1. Support for following LLM providers: OpenAI, Anthropic, Groq, Ollama
