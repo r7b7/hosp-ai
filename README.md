@@ -18,6 +18,8 @@ The result? Hosp-AI
 
 A library designed for quick prototyping with LLMs, and fully compatible with production-ready frameworks like Spring Boot.
 
+Thanks to [Adalflow](https://github.com/SylphAI-Inc/AdalFlow) , the inspiration behind building this library.
+
 ## Contributions are Welcome (in need of volunteers)
 1. Fork the Repo
 2. Create a Branch - name it based on issue-fix, documentation, feature
