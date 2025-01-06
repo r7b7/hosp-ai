@@ -1,6 +1,5 @@
 package com.r7b7.model;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -13,7 +12,8 @@ public class BaseLLMRequest implements ILLMRequest {
     private List<ToolFunction> functions;
     private Object toolChoice;
 
-    public BaseLLMRequest(List<Message> messages, Map<String, Object> parameters, List<ToolFunction> functions, Object toolChoice) {
+    public BaseLLMRequest(List<Message> messages, Map<String, Object> parameters, List<ToolFunction> functions,
+            Object toolChoice) {
         this.messages = messages;
         this.parameters = parameters;
         this.functions = functions;

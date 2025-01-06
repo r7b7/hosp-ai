@@ -30,14 +30,14 @@ public class OpenAIService implements ILLMService {
         Map<String, Object> requestMap = new HashMap<>();
         requestMap.put("model", this.model);
         requestMap.put("messages", request.getPrompt());
-        if (null != request.getFunctions()) {
+        if (null != request.getFunctions() && !request.getFunctions().isEmpty()) {
             List<Tool> tool = request.getFunctions().stream().map(func -> new Tool("function", func)).toList();
             requestMap.put("tools", tool);
         }
         if (null != request.getToolChoice()) {
             requestMap.put("tool_choice", request.getToolChoice());
         }
-        if (null != request.getParameters()) {
+        if (null != request.getParameters() && !request.getParameters().isEmpty()) {
             for (Map.Entry<String, Object> entry : request.getParameters().entrySet()) {
                 requestMap.put(entry.getKey(), entry.getValue());
             }

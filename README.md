@@ -20,20 +20,22 @@ A library designed for quick prototyping with LLMs, and fully compatible with pr
 
 Thanks to [Adalflow](https://github.com/SylphAI-Inc/AdalFlow) , the inspiration behind building this library.
 
-## Contributions are Welcome (in need of volunteers)
+## Contributions are Welcome 
 1. Fork the Repo
 2. Create a Branch - name it based on issue-fix, documentation, feature
 3. Pull a PR
-4. Tools Support
+4. Once Reviewed, PR will be merged by Admin
 
 ## Features
-1. Support for following LLM providers: OpenAI, Anthropic, Groq, Ollama
+1. Following LLM providers are supported currently: OpenAI, Anthropic, Groq, Ollama
 2. PromptBuilder to build complex prompts
-3. Support to customize default client implementations (Flexible approach for integrating with frameworks like SpringBoot)
+3. Flexibility to add customized client implementations 
+4. Tools(Function Calls) Supported
+5. Add Image in Prompt
 
 ### Features in Pipeline
-1. Image Support
-2. Stream Response
+1. Stream Response
+2. Structured Output
       
 ## Installation
 1. Add jitpack repository in pom file

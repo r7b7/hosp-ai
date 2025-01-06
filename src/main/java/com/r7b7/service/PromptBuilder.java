@@ -12,7 +12,7 @@ public class PromptBuilder {
     private List<Message> messages = new ArrayList<>();
     private Map<String, Object> params = new HashMap<>();
     private List<ToolFunction> functions = new ArrayList<>();
-    private Object toolChoice = "none";
+    private Object toolChoice = null;
 
     public PromptBuilder addMessage(Message message) {
         this.messages.add(message);
