@@ -7,10 +7,9 @@
 
   <groupId>com.r7b7</groupId>
   <artifactId>hosp-ai</artifactId>
-  <version>1.0.0-alpha.1</version>
+  <version>1.0.0</version>
 
   <name>hosp-ai</name>
-  <url>https://github.com/r7b7</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
