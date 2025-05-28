@@ -16,6 +16,8 @@ This had to be fixed.
 
 The result? Hosp-AI 
 
+Hosp is a short form derived from the Danish word - holdspiller - In English it means "team player". The idea is to create a library that's effective and fits in easily.
+
 A library designed for quick prototyping with LLMs, and fully compatible with production-ready frameworks like Spring Boot.
 
 Thanks to [Adalflow](https://github.com/SylphAI-Inc/AdalFlow) , the inspiration behind building this library.
