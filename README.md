@@ -58,6 +58,38 @@ Thanks to [Adalflow](https://github.com/SylphAI-Inc/AdalFlow) , the inspiration 
     </dependency>
 
 
+## Enterprise Usage (Recommended)
+
+Use the builder-based facade API to configure provider, model, timeouts, and inject shared dependencies like `HttpClient` and `ObjectMapper`.
+
+```java
+import java.net.http.HttpClient;
+import java.time.Duration;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.r7b7.entity.Provider;
+import com.r7b7.llm.DefaultLlmClient;
+import com.r7b7.llm.LlmClient;
+import com.r7b7.model.BaseLLMRequest;
+
+// Build your prompt however you prefer
+var request = new BaseLLMRequest(promptMessages, Map.of("temperature", 0.2), null, null);
+
+LlmClient client = DefaultLlmClient.builder()
+    .provider(Provider.OPENAI)
+    .apiKey(System.getenv("OPENAI_API_KEY"))
+    .model("gpt-4o-mini")
+    .requestTimeout(Duration.ofSeconds(60))
+    .httpClient(HttpClient.newHttpClient())
+    .objectMapper(new ObjectMapper())
+    .build();
+
+var response = client.chat(request);
+```
+
+This API throws runtime exceptions under `com.r7b7.llm.exception` when a request fails, which tends to fit enterprise error handling patterns better than propagating errors via response objects.
+
+
    
 ## Working Examples
 For working examples and tutorials - visit [Wiki](https://github.com/r7b7/hosp-ai/wiki)

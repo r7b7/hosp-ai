@@ -8,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 
 import com.r7b7.client.IAnthropicClient;
 import com.r7b7.client.factory.LLMClientFactory;
+import com.r7b7.constant.HospAiKeys;
 import com.r7b7.entity.AnthropicTool;
 import com.r7b7.entity.CompletionRequest;
 import com.r7b7.entity.CompletionResponse;
@@ -29,33 +30,33 @@ public class AnthropicService implements ILLMService {
     public CompletionResponse generateResponse(ILLMRequest request) {
         IAnthropicClient client = LLMClientFactory.getAnthropicClient();
         Map<String, Object> requestMap = new HashMap<>();
-        requestMap.put("model", this.model);
-        String systemMessage = getSystemMessage(request);
+        requestMap.put(HospAiKeys.Json.MODEL, this.model);
+        String systemMessage = getSystemMessage(request.getPrompt());
         if (!StringUtility.isNullOrEmpty(systemMessage)) {
-            requestMap.put("system", systemMessage);
+            requestMap.put(HospAiKeys.Json.SYSTEM, systemMessage);
         }
-        requestMap.put("messages", request.getPrompt());
+        requestMap.put(HospAiKeys.Json.MESSAGES, getNonSystemMessages(request.getPrompt()));
         if (null != request.getFunctions() && !request.getFunctions().isEmpty()) {
             List<AnthropicTool> tool = request.getFunctions().stream()
                     .map(func -> new AnthropicTool(func.name(), func.description(), func.parameters())).toList();
-            requestMap.put("tools", tool);
+            requestMap.put(HospAiKeys.Json.TOOLS, tool);
         }
         if (null != request.getToolChoice()) {
             if (request.getToolChoice() instanceof String) {
-                requestMap.put("tool_choice", Map.of("type", request.getToolChoice()));
+                requestMap.put(HospAiKeys.Json.TOOL_CHOICE, Map.of(HospAiKeys.Json.TYPE, request.getToolChoice()));
             } else {
-                requestMap.put("tool_choice", request.getToolChoice());
+                requestMap.put(HospAiKeys.Json.TOOL_CHOICE, request.getToolChoice());
             }
         }
         // set mandatory param if not set explicitly
-        requestMap.put("max_tokens", 1024);
         if (null != request.getParameters() && !request.getParameters().isEmpty()) {
             for (Map.Entry<String, Object> entry : request.getParameters().entrySet()) {
                 requestMap.put(entry.getKey(), entry.getValue());
             }
         }
+        requestMap.putIfAbsent(HospAiKeys.Json.MAX_TOKENS, 1024);
         // override disabled features if set dynamically
-        requestMap.put("stream", false);
+        requestMap.putIfAbsent(HospAiKeys.Json.STREAM, false);
 
         CompletionResponse response = client.generateCompletion(new CompletionRequest(requestMap, this.apiKey));
         return response;
@@ -70,14 +71,14 @@ public class AnthropicService implements ILLMService {
     public CompletionResponse generateResponse(String inputQuery) {
         IAnthropicClient client = LLMClientFactory.getAnthropicClient();
         Map<String, Object> requestMap = new HashMap<>();
-        requestMap.put("model", this.model);
+        requestMap.put(HospAiKeys.Json.MODEL, this.model);
         List<Message> prompt = new ArrayList<>();
         prompt.add(new Message(Role.user, inputQuery));
-        requestMap.put("messages", prompt);
+        requestMap.put(HospAiKeys.Json.MESSAGES, prompt);
         // set mandatory param
-        requestMap.put("max_tokens", 1024);
+        requestMap.putIfAbsent(HospAiKeys.Json.MAX_TOKENS, 1024);
         // override disabled features if set dynamically
-        requestMap.put("stream", false);
+        requestMap.putIfAbsent(HospAiKeys.Json.STREAM, false);
 
         CompletionResponse response = client.generateCompletion(new CompletionRequest(requestMap, this.apiKey));
         return response;
@@ -88,15 +89,15 @@ public class AnthropicService implements ILLMService {
         return CompletableFuture.supplyAsync(() -> generateResponse(inputQuery));
     }
 
-    private String getSystemMessage(ILLMRequest request) {
-        String systemMessage = (String) request.getPrompt().stream()
+    private String getSystemMessage(List<Message> prompt) {
+        return prompt.stream()
                 .filter(msg -> msg.role() == Role.system)
                 .findFirst()
-                .map(msg -> {
-                    request.getPrompt().remove(msg);
-                    return msg.content();
-                })
+                .map(msg -> (String) msg.content())
                 .orElse(null);
-        return systemMessage;
+    }
+
+    private List<Message> getNonSystemMessages(List<Message> prompt) {
+        return prompt.stream().filter(msg -> msg.role() != Role.system).toList();
     }
 }

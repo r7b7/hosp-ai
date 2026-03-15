@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.mockito.ArgumentMatchers;
 import org.mockito.MockitoAnnotations;
 
 import com.r7b7.entity.CompletionRequest;
@@ -50,11 +51,12 @@ public class DefaultGroqClientTest {
                         requestMap.put("messages", prompt);
                         CompletionRequest request = new CompletionRequest(requestMap, "api-key");
 
-                        HttpResponse<String> mockResponse = mock(HttpResponse.class);
+                        @SuppressWarnings("unchecked")
+                        HttpResponse<String> mockResponse = (HttpResponse<String>) mock(HttpResponse.class);
                         when(mockResponse.statusCode()).thenReturn(200);
                         when(mockResponse.body()).thenReturn(
                                         "{\"id\":\"xxx\",\"model\":\"test\",\"choices\":[{\"index\":0, \"message\":{\"type\": \"assistant\", \"text\": \"Hi there!\"}}],\"usage\":{\"prompt_tokens\": 55,\"completion_tokens\": 12,\"total_tokens\": 67}}");
-                        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                        when(mockHttpClient.send(any(HttpRequest.class), ArgumentMatchers.<HttpResponse.BodyHandler<String>>any()))
                                         .thenReturn(mockResponse);
                         mockedStatic.when(HttpClient::newHttpClient).thenReturn(mockHttpClient);
 
@@ -76,11 +78,12 @@ public class DefaultGroqClientTest {
                         prompt.add(new Message(Role.system, "You are a helpful assistant"));
                         requestMap.put("messages", prompt);
                         CompletionRequest request = new CompletionRequest(requestMap, "api-key");
-                        HttpResponse<String> mockResponse = mock(HttpResponse.class);
+                        @SuppressWarnings("unchecked")
+                        HttpResponse<String> mockResponse = (HttpResponse<String>) mock(HttpResponse.class);
                         when(mockResponse.statusCode()).thenReturn(200);
                         when(mockResponse.body()).thenReturn(
                                         "{\"id\":\"xxx\",\"model\":\"test\",\"choices\":[{\"index\":0, \"message\":{\"type\": \"assistant\", \"text\": \"Hi there!\"}}],\"usage\":{\"prompt_tokens\": 55,\"completion_tokens\": 12,\"total_tokens\": 67}}");
-                        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                        when(mockHttpClient.send(any(HttpRequest.class), ArgumentMatchers.<HttpResponse.BodyHandler<String>>any()))
                                         .thenReturn(mockResponse);
                         mockedStatic.when(HttpClient::newHttpClient).thenReturn(mockHttpClient);
 
@@ -101,10 +104,11 @@ public class DefaultGroqClientTest {
                         prompt.add(new Message(Role.system, "You are a helpful assistant"));
                         requestMap.put("messages", prompt);
                         CompletionRequest request = new CompletionRequest(requestMap, "api-key");
-                        HttpResponse<String> mockResponse = mock(HttpResponse.class);
+                        @SuppressWarnings("unchecked")
+                        HttpResponse<String> mockResponse = (HttpResponse<String>) mock(HttpResponse.class);
                         when(mockResponse.statusCode()).thenReturn(401);
 
-                        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                        when(mockHttpClient.send(any(HttpRequest.class), ArgumentMatchers.<HttpResponse.BodyHandler<String>>any()))
                                         .thenReturn(mockResponse);
                         mockedStatic.when(HttpClient::newHttpClient).thenReturn(mockHttpClient);
 
@@ -127,7 +131,7 @@ public class DefaultGroqClientTest {
                         requestMap.put("messages", prompt);
                         CompletionRequest request = new CompletionRequest(requestMap, "api-key");
 
-                        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                        when(mockHttpClient.send(any(HttpRequest.class), ArgumentMatchers.<HttpResponse.BodyHandler<String>>any()))
                                         .thenThrow(new IOException("Mocked IOException"));
 
                         mockedStatic.when(HttpClient::newHttpClient).thenReturn(mockHttpClient);

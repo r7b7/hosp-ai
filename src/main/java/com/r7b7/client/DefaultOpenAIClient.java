@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -11,37 +12,52 @@ import java.util.Properties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.r7b7.client.model.Message;
 import com.r7b7.client.model.OpenAIResponse;
+import com.r7b7.constant.HospAiKeys;
 import com.r7b7.config.PropertyConfig;
 import com.r7b7.entity.CompletionRequest;
 import com.r7b7.entity.CompletionResponse;
 import com.r7b7.entity.ErrorResponse;
 
 public class DefaultOpenAIClient implements IOpenAIClient {
-    private String OPENAI_API_URL;
+    private final String OPENAI_API_URL;
+    private final HttpClient httpClient;
+    private final ObjectMapper objectMapper;
+    private final Duration requestTimeout;
 
     public DefaultOpenAIClient() {
+        this(null, null, null, null);
+    }
+
+    public DefaultOpenAIClient(URI baseUri, HttpClient httpClient, ObjectMapper objectMapper, Duration requestTimeout) {
         try {
             Properties properties = PropertyConfig.loadConfig();
-            OPENAI_API_URL = properties.getProperty("hospai.openai.url");
+            URI resolved = baseUri != null ? baseUri : URI.create(properties.getProperty(HospAiKeys.Properties.OPENAI_URL));
+            this.OPENAI_API_URL = resolved.toString();
         } catch (Exception ex) {
-            throw new IllegalStateException("Critical configuration missing: CRITICAL_PROPERTY");
+            throw new IllegalStateException("Critical configuration missing: " + HospAiKeys.Properties.OPENAI_URL, ex);
         }
+        this.httpClient = httpClient != null ? httpClient : HttpClient.newHttpClient();
+        this.objectMapper = objectMapper != null ? objectMapper : new ObjectMapper();
+        this.requestTimeout = requestTimeout;
     }
 
     @Override
     public CompletionResponse generateCompletion(CompletionRequest request) {
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            String jsonRequest = objectMapper.writeValueAsString(request.requestBody());
+            String jsonRequest = this.objectMapper.writeValueAsString(request.requestBody());
 
-            HttpRequest httpRequest = HttpRequest.newBuilder()
+            HttpRequest.Builder httpRequestBuilder = HttpRequest.newBuilder()
                     .uri(URI.create(this.OPENAI_API_URL))
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + request.apiKey())
-                    .POST(HttpRequest.BodyPublishers.ofString(jsonRequest))
-                    .build();
-            HttpResponse<String> response = HttpClient.newHttpClient().send(httpRequest,
-                    HttpResponse.BodyHandlers.ofString());
+                    .header(HospAiKeys.Headers.CONTENT_TYPE, HospAiKeys.ContentTypes.APPLICATION_JSON)
+                    .header(HospAiKeys.Headers.AUTHORIZATION, "Bearer " + request.apiKey())
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonRequest));
+
+            if (requestTimeout != null) {
+                httpRequestBuilder.timeout(requestTimeout);
+            }
+
+            HttpRequest httpRequest = httpRequestBuilder.build();
+            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() == 200) {
                 return extractResponseText(response.body());
             } else {
@@ -60,8 +76,7 @@ public class DefaultOpenAIClient implements IOpenAIClient {
         Map<String, Object> metadata = null;
 
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            response = mapper.readValue(responseBody, OpenAIResponse.class);
+            response = objectMapper.readValue(responseBody, OpenAIResponse.class);
             msgs = response.choices().stream()
                     .map(choice -> new Message(choice.message().role(), choice.message().content(),
                             choice.message().toolCalls()))
