@@ -12,13 +12,13 @@ import java.util.Properties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.r7b7.client.model.Message;
 import com.r7b7.client.model.OllamaResponse;
-import com.r7b7.constant.HospAiKeys;
 import com.r7b7.config.PropertyConfig;
+import com.r7b7.constant.HospAiKeys;
 import com.r7b7.entity.CompletionRequest;
 import com.r7b7.entity.CompletionResponse;
 import com.r7b7.entity.ErrorResponse;
 
-public class DefaultOllamaClient implements IOllamaClient {
+public class DefaultOllamaClient implements LlmHttpClient {
     private final String OLLAMA_API_URL;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;

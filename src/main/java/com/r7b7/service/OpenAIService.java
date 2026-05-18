@@ -1,78 +1,44 @@
 package com.r7b7.service;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
-import com.r7b7.client.IOpenAIClient;
-import com.r7b7.client.factory.LLMClientFactory;
+import com.r7b7.client.LlmHttpClient;
 import com.r7b7.constant.HospAiKeys;
 import com.r7b7.entity.CompletionRequest;
 import com.r7b7.entity.CompletionResponse;
-import com.r7b7.entity.Message;
-import com.r7b7.entity.Role;
 import com.r7b7.entity.Tool;
 import com.r7b7.model.ILLMRequest;
 
 public class OpenAIService implements ILLMService {
     private final String apiKey;
     private final String model;
+    private final LlmHttpClient client;
 
-    public OpenAIService(String apiKey, String model) {
+    public OpenAIService(String apiKey, String model, LlmHttpClient client) {
         this.apiKey = apiKey;
         this.model = model;
+        this.client = client;
     }
 
     @Override
     public CompletionResponse generateResponse(ILLMRequest request) {
-        IOpenAIClient client = LLMClientFactory.getOpenAIClient();
         Map<String, Object> requestMap = new HashMap<>();
         requestMap.put(HospAiKeys.Json.MODEL, this.model);
         requestMap.put(HospAiKeys.Json.MESSAGES, request.getPrompt());
-        if (null != request.getFunctions() && !request.getFunctions().isEmpty()) {
-            List<Tool> tool = request.getFunctions().stream().map(func -> new Tool("function", func)).toList();
-            requestMap.put(HospAiKeys.Json.TOOLS, tool);
+        if (request.getFunctions() != null && !request.getFunctions().isEmpty()) {
+            List<Tool> tools = request.getFunctions().stream()
+                    .map(func -> new Tool("function", func)).toList();
+            requestMap.put(HospAiKeys.Json.TOOLS, tools);
         }
-        if (null != request.getToolChoice()) {
+        if (request.getToolChoice() != null) {
             requestMap.put(HospAiKeys.Json.TOOL_CHOICE, request.getToolChoice());
         }
-        if (null != request.getParameters() && !request.getParameters().isEmpty()) {
-            for (Map.Entry<String, Object> entry : request.getParameters().entrySet()) {
-                requestMap.put(entry.getKey(), entry.getValue());
-            }
+        if (request.getParameters() != null && !request.getParameters().isEmpty()) {
+            requestMap.putAll(request.getParameters());
         }
-        // override disabled features if set dynamically
         requestMap.putIfAbsent(HospAiKeys.Json.STREAM, false);
-
-        CompletionResponse response = client.generateCompletion(new CompletionRequest(requestMap, this.apiKey));
-        return response;
-    }
-
-    @Override
-    public CompletableFuture<CompletionResponse> generateResponseAsync(ILLMRequest request) {
-        return CompletableFuture.supplyAsync(() -> generateResponse(request));
-    }
-
-    @Override
-    public CompletionResponse generateResponse(String inputQuery) {
-        IOpenAIClient client = LLMClientFactory.getOpenAIClient();
-        Map<String, Object> requestMap = new HashMap<>();
-        requestMap.put(HospAiKeys.Json.MODEL, this.model);
-        List<Message> prompt = new ArrayList<>();
-        prompt.add(new Message(Role.user, inputQuery));
-        requestMap.put(HospAiKeys.Json.MESSAGES, prompt);
-        
-        // override disabled features if set dynamically
-        requestMap.putIfAbsent(HospAiKeys.Json.STREAM, false);
-
-        CompletionResponse response = client.generateCompletion(new CompletionRequest(requestMap, this.apiKey));
-        return response;
-    }
-
-    @Override
-    public CompletableFuture<CompletionResponse> generateResponseAsync(String inputQuery) {
-        return CompletableFuture.supplyAsync(() -> generateResponse(inputQuery));
+        return client.generateCompletion(new CompletionRequest(requestMap, this.apiKey));
     }
 }

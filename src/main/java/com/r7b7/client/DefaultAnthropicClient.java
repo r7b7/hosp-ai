@@ -13,13 +13,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.r7b7.client.model.AnthroToolResponse;
 import com.r7b7.client.model.AnthropicResponse;
 import com.r7b7.client.model.Message;
-import com.r7b7.constant.HospAiKeys;
 import com.r7b7.config.PropertyConfig;
+import com.r7b7.constant.HospAiKeys;
 import com.r7b7.entity.CompletionRequest;
 import com.r7b7.entity.CompletionResponse;
 import com.r7b7.entity.ErrorResponse;
 
-public class DefaultAnthropicClient implements IAnthropicClient {
+public class DefaultAnthropicClient implements LlmHttpClient {
     private final String ANTHROPIC_API_URL;
     private final String ANTHROPIC_VERSION;
     private final HttpClient httpClient;

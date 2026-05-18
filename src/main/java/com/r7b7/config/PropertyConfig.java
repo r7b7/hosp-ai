@@ -12,6 +12,10 @@ public class PropertyConfig {
             properties = new Properties();
             try (InputStream input = PropertyConfig.class.getClassLoader()
                     .getResourceAsStream("application.properties")) {
+                if (input == null) {
+                    throw new IOException("application.properties not found on classpath. "
+                            + "Add the file or supply explicit URIs via LlmClientConfig.");
+                }
                 properties.load(input);
             }
         }

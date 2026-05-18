@@ -18,24 +18,28 @@ import com.r7b7.entity.CompletionRequest;
 import com.r7b7.entity.CompletionResponse;
 import com.r7b7.entity.ErrorResponse;
 
-public class DefaultOpenAIClient implements IOpenAIClient {
-    private final String OPENAI_API_URL;
+public class DefaultOpenAIClient implements LlmHttpClient {
+    private final String apiUrl;
+    private final String providerName;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final Duration requestTimeout;
 
     public DefaultOpenAIClient() {
-        this(null, null, null, null);
+        this(null, null, null, null, null);
     }
 
-    public DefaultOpenAIClient(URI baseUri, HttpClient httpClient, ObjectMapper objectMapper, Duration requestTimeout) {
+    public DefaultOpenAIClient(URI baseUri, String providerName, HttpClient httpClient,
+            ObjectMapper objectMapper, Duration requestTimeout) {
         try {
             Properties properties = PropertyConfig.loadConfig();
-            URI resolved = baseUri != null ? baseUri : URI.create(properties.getProperty(HospAiKeys.Properties.OPENAI_URL));
-            this.OPENAI_API_URL = resolved.toString();
+            URI resolved = baseUri != null ? baseUri
+                    : URI.create(properties.getProperty(HospAiKeys.Properties.OPENAI_URL));
+            this.apiUrl = resolved.toString();
         } catch (Exception ex) {
             throw new IllegalStateException("Critical configuration missing: " + HospAiKeys.Properties.OPENAI_URL, ex);
         }
+        this.providerName = providerName != null ? providerName : "OpenAI";
         this.httpClient = httpClient != null ? httpClient : HttpClient.newHttpClient();
         this.objectMapper = objectMapper != null ? objectMapper : new ObjectMapper();
         this.requestTimeout = requestTimeout;
@@ -47,7 +51,7 @@ public class DefaultOpenAIClient implements IOpenAIClient {
             String jsonRequest = this.objectMapper.writeValueAsString(request.requestBody());
 
             HttpRequest.Builder httpRequestBuilder = HttpRequest.newBuilder()
-                    .uri(URI.create(this.OPENAI_API_URL))
+                    .uri(URI.create(this.apiUrl))
                     .header(HospAiKeys.Headers.CONTENT_TYPE, HospAiKeys.ContentTypes.APPLICATION_JSON)
                     .header(HospAiKeys.Headers.AUTHORIZATION, "Bearer " + request.apiKey())
                     .POST(HttpRequest.BodyPublishers.ofString(jsonRequest));
@@ -56,10 +60,10 @@ public class DefaultOpenAIClient implements IOpenAIClient {
                 httpRequestBuilder.timeout(requestTimeout);
             }
 
-            HttpRequest httpRequest = httpRequestBuilder.build();
-            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = httpClient.send(httpRequestBuilder.build(),
+                    HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() == 200) {
-                return extractResponseText(response.body());
+                return extractResponse(response.body());
             } else {
                 return new CompletionResponse(null, null, new ErrorResponse(
                         "Request sent to LLM failed: " + response.statusCode() + response.body(), null));
@@ -69,28 +73,24 @@ public class DefaultOpenAIClient implements IOpenAIClient {
         }
     }
 
-    private CompletionResponse extractResponseText(String responseBody) {
-        List<Message> msgs = null;
-        OpenAIResponse response = null;
-        ErrorResponse error = null;
-        Map<String, Object> metadata = null;
-
+    private CompletionResponse extractResponse(String responseBody) {
         try {
-            response = objectMapper.readValue(responseBody, OpenAIResponse.class);
-            msgs = response.choices().stream()
+            OpenAIResponse response = objectMapper.readValue(responseBody, OpenAIResponse.class);
+            List<Message> msgs = response.choices().stream()
                     .map(choice -> new Message(choice.message().role(), choice.message().content(),
                             choice.message().toolCalls()))
                     .toList();
-            metadata = Map.of(
+            Map<String, Object> metadata = Map.of(
                     "id", response.id(),
                     "model", response.model(),
-                    "provider", "OpenAi",
+                    "provider", providerName,
                     "prompt_tokens", response.usage().promptTokens(),
                     "completion_tokens", response.usage().completionTokens(),
                     "total_tokens", response.usage().totalTokens());
+            return new CompletionResponse(msgs, metadata, null);
         } catch (Exception ex) {
-            error = new ErrorResponse("Exception occurred in extracting response", ex);
+            return new CompletionResponse(null, null,
+                    new ErrorResponse("Exception occurred in extracting response", ex));
         }
-        return new CompletionResponse(msgs, metadata, error);
     }
 }

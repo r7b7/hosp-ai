@@ -1,19 +1,17 @@
 package com.r7b7.service;
 
+import com.r7b7.client.LlmHttpClient;
 import com.r7b7.entity.Provider;
 
 public class LLMServiceFactory {
-    public static ILLMService createService(Provider provider, String apiKey, String model) {
+
+    public static ILLMService createService(Provider provider, String apiKey, String model, LlmHttpClient client) {
         return switch (provider) {
-            case Provider.OPENAI -> new OpenAIService(apiKey, model);
-            case Provider.ANTHROPIC -> new AnthropicService(apiKey, model);
-            case Provider.OLLAMA -> new OllamaService(model);
-            case Provider.GROQ -> new GroqService(apiKey, model);
+            case OPENAI -> new OpenAIService(apiKey, model, client);
+            case ANTHROPIC -> new AnthropicService(apiKey, model, client);
+            case OLLAMA -> new OllamaService(model, client);
+            case GROQ -> new OpenAIService(apiKey, model, client);
             default -> throw new IllegalArgumentException("Unsupported provider: " + provider);
         };
-    }
-
-    public static ILLMService createService(Provider provider, String model) {
-        return createService(provider, null, model);
     }
 }
