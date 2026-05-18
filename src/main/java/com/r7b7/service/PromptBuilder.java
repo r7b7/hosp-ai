@@ -42,7 +42,7 @@ public class PromptBuilder {
         return this.params;
     }
 
-    public PromptEngine build(ILLMService service) {
-        return new PromptEngine(service, this.params, this.messages, this.functions, this.toolChoice);
+    public PromptEngine build(com.r7b7.llm.LlmClient client) {
+        return new PromptEngine(client, this.params, this.messages, this.functions, this.toolChoice);
     }
 }

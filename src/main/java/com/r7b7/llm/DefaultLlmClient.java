@@ -1,22 +1,25 @@
 package com.r7b7.llm;
 
+import java.net.URI;
 import java.net.http.HttpClient;
+import java.time.Duration;
+import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.r7b7.client.DefaultAnthropicClient;
-import com.r7b7.client.DefaultGroqClient;
 import com.r7b7.client.DefaultOllamaClient;
 import com.r7b7.client.DefaultOpenAIClient;
+import com.r7b7.client.LlmHttpClient;
+import com.r7b7.config.PropertyConfig;
+import com.r7b7.constant.HospAiKeys;
 import com.r7b7.entity.CompletionResponse;
 import com.r7b7.entity.Provider;
 import com.r7b7.llm.exception.LlmConfigurationException;
 import com.r7b7.llm.exception.LlmException;
-import com.r7b7.llm.exception.LlmRequestException;
 import com.r7b7.model.ILLMRequest;
-import com.r7b7.client.factory.LLMClientFactory;
 import com.r7b7.service.ILLMService;
 import com.r7b7.service.LLMServiceFactory;
 
@@ -27,8 +30,6 @@ public final class DefaultLlmClient implements LlmClient {
     private final ILLMService service;
 
     private DefaultLlmClient(LlmClientConfig config, HttpClient httpClient, ObjectMapper objectMapper) {
-        this.config = config;
-
         if (config == null) {
             throw new LlmConfigurationException("config must not be null");
         }
@@ -38,8 +39,8 @@ public final class DefaultLlmClient implements LlmClient {
         if (config.model() == null || config.model().isBlank()) {
             throw new LlmConfigurationException("model must not be null/blank");
         }
-
-        this.service = createServiceWithInjectedProviderClient(config, httpClient, objectMapper);
+        this.config = config;
+        this.service = buildService(config, httpClient, objectMapper);
     }
 
     public static Builder builder() {
@@ -56,46 +57,35 @@ public final class DefaultLlmClient implements LlmClient {
             if (details != null) {
                 throw new LlmException(msg, details);
             }
-            throw new LlmRequestException(msg, -1, null);
+            throw new LlmException(msg);
         }
         return response;
     }
 
-    private static ILLMService createServiceWithInjectedProviderClient(
-            LlmClientConfig cfg,
-            HttpClient httpClient,
-            ObjectMapper objectMapper) {
-        Provider provider = cfg.provider();
-        switch (provider) {
+    private static ILLMService buildService(LlmClientConfig cfg, HttpClient httpClient, ObjectMapper objectMapper) {
+        return switch (cfg.provider()) {
             case OPENAI -> {
                 ensureApiKey(cfg);
-                LLMClientFactory.setOpenAIClient(
-                        new DefaultOpenAIClient(cfg.baseUri(), httpClient, objectMapper, cfg.requestTimeout()));
-                return LLMServiceFactory.createService(provider, cfg.apiKey(), cfg.model());
+                yield LLMServiceFactory.createService(cfg.provider(), cfg.apiKey(), cfg.model(),
+                        new DefaultOpenAIClient(cfg.baseUri(), "OpenAI", httpClient, objectMapper,
+                                cfg.requestTimeout()));
             }
             case GROQ -> {
                 ensureApiKey(cfg);
-                LLMClientFactory.setGroqClient(
-                        new DefaultGroqClient(cfg.baseUri(), httpClient, objectMapper, cfg.requestTimeout()));
-                return LLMServiceFactory.createService(provider, cfg.apiKey(), cfg.model());
+                URI groqUri = resolveUri(cfg.baseUri(), HospAiKeys.Properties.GROQ_URL);
+                yield LLMServiceFactory.createService(cfg.provider(), cfg.apiKey(), cfg.model(),
+                        new DefaultOpenAIClient(groqUri, "Groq", httpClient, objectMapper, cfg.requestTimeout()));
             }
             case ANTHROPIC -> {
                 ensureApiKey(cfg);
-                LLMClientFactory.setAnthropicClient(new DefaultAnthropicClient(
-                        cfg.baseUri(),
-                        cfg.anthropicVersion(),
-                        httpClient,
-                        objectMapper,
-                        cfg.requestTimeout()));
-                return LLMServiceFactory.createService(provider, cfg.apiKey(), cfg.model());
+                yield LLMServiceFactory.createService(cfg.provider(), cfg.apiKey(), cfg.model(),
+                        new DefaultAnthropicClient(cfg.baseUri(), cfg.anthropicVersion(), httpClient,
+                                objectMapper, cfg.requestTimeout()));
             }
-            case OLLAMA -> {
-                LLMClientFactory.setOllamaClient(
-                        new DefaultOllamaClient(cfg.baseUri(), httpClient, objectMapper, cfg.requestTimeout()));
-                return LLMServiceFactory.createService(provider, cfg.model());
-            }
-            default -> throw new LlmConfigurationException("Unsupported provider: " + provider);
-        }
+            case OLLAMA -> LLMServiceFactory.createService(cfg.provider(), cfg.apiKey(), cfg.model(),
+                    new DefaultOllamaClient(cfg.baseUri(), httpClient, objectMapper, cfg.requestTimeout()));
+            default -> throw new LlmConfigurationException("Unsupported provider: " + cfg.provider());
+        };
     }
 
     private static void ensureApiKey(LlmClientConfig cfg) {
@@ -104,13 +94,25 @@ public final class DefaultLlmClient implements LlmClient {
         }
     }
 
+    private static URI resolveUri(URI override, String propertyKey) {
+        if (override != null) {
+            return override;
+        }
+        try {
+            Properties props = PropertyConfig.loadConfig();
+            return URI.create(props.getProperty(propertyKey));
+        } catch (Exception e) {
+            throw new LlmConfigurationException("Could not load URI from property: " + propertyKey, e);
+        }
+    }
+
     public static final class Builder {
         private Provider provider;
         private String apiKey;
         private String model;
-        private java.net.URI baseUri;
+        private URI baseUri;
         private String anthropicVersion;
-        private java.time.Duration requestTimeout = java.time.Duration.ofSeconds(60);
+        private Duration requestTimeout = Duration.ofSeconds(60);
         private HttpClient httpClient;
         private ObjectMapper objectMapper;
 
@@ -129,7 +131,7 @@ public final class DefaultLlmClient implements LlmClient {
             return this;
         }
 
-        public Builder baseUri(java.net.URI baseUri) {
+        public Builder baseUri(URI baseUri) {
             this.baseUri = baseUri;
             return this;
         }
@@ -139,7 +141,7 @@ public final class DefaultLlmClient implements LlmClient {
             return this;
         }
 
-        public Builder requestTimeout(java.time.Duration requestTimeout) {
+        public Builder requestTimeout(Duration requestTimeout) {
             this.requestTimeout = requestTimeout;
             return this;
         }
@@ -157,7 +159,8 @@ public final class DefaultLlmClient implements LlmClient {
         public DefaultLlmClient build() {
             HttpClient hc = this.httpClient != null ? this.httpClient : HttpClient.newHttpClient();
             ObjectMapper om = this.objectMapper != null ? this.objectMapper : new ObjectMapper();
-            return new DefaultLlmClient(new LlmClientConfig(provider, apiKey, model, baseUri, anthropicVersion, requestTimeout), hc, om);
+            return new DefaultLlmClient(
+                    new LlmClientConfig(provider, apiKey, model, baseUri, anthropicVersion, requestTimeout), hc, om);
         }
     }
 }

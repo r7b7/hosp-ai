@@ -1,29 +1,29 @@
 package com.r7b7.service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import com.r7b7.entity.CompletionResponse;
-import com.r7b7.entity.Message;
 import com.r7b7.entity.ToolFunction;
+import com.r7b7.llm.LlmClient;
 import com.r7b7.model.BaseLLMRequest;
 import com.r7b7.model.ILLMRequest;
 
 public class PromptEngine {
-    private final ILLMService llmService;
+    private final LlmClient llmClient;
     private final Map<String, Object> params;
-    private final List<Message> messages;
-    private List<ToolFunction> functions = new ArrayList<>();
-    private Object toolChoice = "none";
+    private final List<com.r7b7.entity.Message> messages;
+    private final List<ToolFunction> functions;
+    private final Object toolChoice;
 
-    public PromptEngine(ILLMService llmService) {
-        this(llmService, null, null, null, null);
+    public PromptEngine(LlmClient llmClient) {
+        this(llmClient, null, null, null, null);
     }
 
-    public PromptEngine(ILLMService llmService, Map<String, Object> params, List<Message> messages, List<ToolFunction> functions, Object toolChoice) {
-        this.llmService = llmService;
+    public PromptEngine(LlmClient llmClient, Map<String, Object> params,
+            List<com.r7b7.entity.Message> messages, List<ToolFunction> functions, Object toolChoice) {
+        this.llmClient = llmClient;
         this.params = params;
         this.messages = messages;
         this.functions = functions;
@@ -31,22 +31,20 @@ public class PromptEngine {
     }
 
     public CompletionResponse sendQuery() {
-        ILLMRequest request = new BaseLLMRequest(this.messages, this.params, this.functions, this.toolChoice);
-        CompletionResponse response = this.llmService.generateResponse(request);
-        return response;
+        ILLMRequest request = new BaseLLMRequest(messages, params, functions, toolChoice);
+        return llmClient.chat(request);
     }
 
     public CompletableFuture<CompletionResponse> sendQueryAsync() {
-        ILLMRequest request = new BaseLLMRequest(this.messages, this.params, this.functions, this.toolChoice);
-        return this.llmService.generateResponseAsync(request);
+        ILLMRequest request = new BaseLLMRequest(messages, params, functions, toolChoice);
+        return llmClient.chatAsync(request);
     }
 
     public CompletionResponse sendQuery(String inputQuery) {
-        CompletionResponse response = this.llmService.generateResponse(inputQuery);
-        return response;
+        return llmClient.chat(inputQuery);
     }
 
     public CompletableFuture<CompletionResponse> sendQueryAsync(String inputQuery) {
-        return this.llmService.generateResponseAsync(inputQuery);
+        return llmClient.chatAsync(inputQuery);
     }
 }
