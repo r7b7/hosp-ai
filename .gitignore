@@ -21,3 +21,6 @@ buildNumber.properties
 ### VS Code ###
 .vscode/
 .env
+
+### Claude Code ###
+.claude/
